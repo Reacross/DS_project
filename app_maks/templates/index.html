@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comment Analyzer</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Comment Analyzer</h1>
+    <form id="comment-form">
+        <textarea name="comment" rows="4" cols="50"></textarea><br>
+        <input type="submit" value="Analyze">
+    </form>
+    <div id="result"></div>
+
+    <script>
+    $(document).ready(function() {
+        $('#comment-form').on('submit', function(e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/',
+                method: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    let result = '<h2>Results:</h2>';
+                    result += '<p><strong>Original Comment:</strong> ' + response.original_comment + '</p>';
+                    
+                    if (response.message) {
+                        result += '<p><strong>' + response.message + '</strong></p>';
+                    } else {
+                        result += '<p><strong>Summarized Comment:</strong> ' + response.summarized_comment + '</p>';
+                        result += '<h3>Classification:</h3>';
+                        for (let label in response.classification) {
+                            result += '<p>' + label + ': ' + (response.classification[label] * 100).toFixed(2) + '%</p>';
+                        }
+                    }
+                    
+                    $('#result').html(result);
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html>

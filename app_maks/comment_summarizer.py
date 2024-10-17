@@ -83,6 +83,9 @@ class TextSummarizer:
         return summary
 
 
+summarizer = TextSummarizer()
+
+
 def main():
     summarizer = TextSummarizer()
     while True:
