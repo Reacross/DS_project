@@ -1,6 +1,5 @@
 import torch
-import os
-from transformers import BertTokenizer, BertForSequenceClassification
+from transformers import BertTokenizer
 from flask import Flask, render_template, request, jsonify
 
 from comment_summarizer import summarizer as sm
@@ -8,16 +7,7 @@ from comment_summarizer import summarizer as sm
 app = Flask(__name__)
 
 # Завантаження повної моделі BERT
-model_path = "bert_toxicity_full_model.pt"
-if not os.path.exists(model_path):
-    print(f"Модель не знайдено за шляхом: {os.path.abspath(model_path)}")
-    print("Спробуємо завантажити модель з Hugging Face...")
-    model = BertForSequenceClassification.from_pretrained("unitary/toxic-bert")
-    torch.save(model, model_path)
-    print(f"Модель збережено за шляхом: {os.path.abspath(model_path)}")
-else:
-    model = torch.load(model_path, map_location=torch.device("cpu"))
-
+model = torch.load("app_final/bert_toxicity_full_model.pt", map_location=torch.device("cpu"))
 model.eval()
 
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
@@ -53,7 +43,7 @@ def index():
                 {
                     "original_comment": comment,
                     "classification": {"spam": 1.0},
-                    "message": "Цей коментар класифіковано як спам.",
+                    "message": "Цей коментар пустий або класифіковано як спам.",
                 }
             )
 
@@ -69,4 +59,4 @@ def index():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

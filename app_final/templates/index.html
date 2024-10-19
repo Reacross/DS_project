@@ -3,10 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Аналізатор коментарів</title>
+    <title>Comment Analyzer</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        html, body {
+            height: 100%;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><text x="0" y="24" font-size="24">🤔</text></svg>'), auto;
+        }
+        .btn {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><text x="0" y="24" font-size="24">👉</text></svg>'), auto;
+        }
+        .btn:hover {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><text x="0" y="24" font-size="24">🎉</text></svg>'), auto;
+        }
+
         body {
             background: linear-gradient(270deg, #e0e0e0, #5e99e7, #e0e0e0);
             background-size: 300% 300%; 
@@ -27,8 +38,7 @@
 
         .container {
             max-width: 800px;
-            margin-top: 50px;
-            padding: 20px; 
+            padding: 10px; 
         }
         .card {
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -93,25 +103,35 @@
             z-index: -1; 
         }
         @keyframes float {
-             0% { transform: translateY(0); }
-             50% { transform: translateY(-20px); }
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
             100% { transform: translateY(0); }
         }
         @keyframes fadeIn {
             0% { opacity: 0; }
             100% { opacity: 1; }
         }
+
+        .btn, textarea {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><text x="0" y="24" font-size="24">👉</text></svg>'), auto; /* Different cursor emoji */
+        }
+        .btn {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><text x="0" y="24" font-size="24">👉</text></svg>'), auto; /* Default button cursor emoji */
+        }
+        .btn:hover {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><text x="0" y="24" font-size="24">🎉</text></svg>'), auto; /* Hover cursor emoji */
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center mb-4">Аналізатор коментарів</h1>
+        <h1 class="text-center mb-4">Comment Analyzer</h1>
         <form id="comment-form">
             <div class="mb-3">
-                <textarea class="form-control" name="comment" rows="4" placeholder="Введіть ваш коментар тут..."></textarea>
+                <textarea class="form-control" name="comment" rows="4" placeholder="Enter your comment here..."></textarea>
             </div>
             <div class="d-grid">
-                <button type="submit" class="btn btn-primary">Аналізувати</button>
+                <button type="submit" class="btn btn-primary">Analyze</button>
             </div>
         </form>
         <div id="result"></div>
@@ -147,46 +167,50 @@
                 method: 'POST',
                 data: $(this).serialize(),
                 beforeSend: function() {
-                    $('#result').html('<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Завантаження...</span></div></div>');
+                    $('#result').html('<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>');
                 },
                 success: function(response) {
                     let result = '<div class="card"><div class="card-body">';
-                    result += '<h5 class="card-title">Результати аналізу:</h5>';
-                    result += '<p><strong>Оригінальний коментар:</strong> ' + response.original_comment + '</p>';
+                    result += '<h5 class="card-title">Analysis Results:</h5>';
+                    result += '<p><strong>Original Comment:</strong> ' + response.original_comment + '</p>';
                     
                     if (response.message) {
                         result += '<div class="alert alert-warning">' + response.message + '</div>';
                     } else {
-                        result += '<p><strong>Узагальнений коментар:</strong> ' + response.summarized_comment + '</p>';
-                        result += '<h6>Класифікація:</h6>';
+                        result += '<p><strong>Summarized Comment:</strong> ' + response.summarized_comment + '</p>';
+                        result += '<h6>Classification:</h6>';
                         let totalToxicity = 0;
                         const labels = {
-                            identity_hate: "Ненависть до особи",
-                            insult: "Образа",
-                            obscene: "Непристойність",
-                            severe_toxic: "Серйона токсичність",
-                            threat: "Загроза",
-                            toxic: "Токсичність"
+                            identity_hate: "Identity Hate",
+                            insult: "Insult",
+                            obscene: "Obscenity",
+                            severe_toxic: "Severe Toxicity",
+                            threat: "Threat",
+                            toxic: "Toxicity"
                         };
+                        result += '<div class="row">'; 
+                        let count = 0; 
                         for (let label in response.classification) {
                             let percentage = (response.classification[label] * 100).toFixed(2);
                             let gradientColor = getGradientColor(percentage);
+                            result += '<div class="col-6 mb-2">'; 
                             result += '<p>' + labels[label] + ':</p>';
-                            result += '<div class="progress mb-3">';
+                            result += '<div class="progress" style="height: 20px;">'; 
                             result += `<div class="progress-bar" role="progressbar" style="width: 0%; background: ${gradientColor};" aria-valuenow="${percentage}" aria-valuemin="0" aria-valuemax="100">0.00%</div>`;
                             result += '</div>';
-                            totalToxicity += response.classification[label];
+                            result += '</div>';
+                            count++;
                         }
+                        result += '</div>'; 
                         let avgToxicity = totalToxicity / Object.keys(response.classification).length;
-                        result += `<div id="emoji-rating" class="text-center">${getEmojiRating(avgToxicity, response.classification)}</div>`;
+                        let emojiRating = getEmojiRating(avgToxicity, response.classification);
+                        result += `<div id="emoji-rating" class="text-center">${emojiRating}</div>`;
+                        
+                        $('html, body').css('cursor', `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><text x="0" y="24" font-size="24">${emojiRating}</text></svg>'), auto`);
                     }
                     
                     result += '</div></div>';
-                    $('#result').hide().html(result).fadeIn(500, function() {
-                        $('html, body').animate({
-                            scrollTop: $('#result').offset().top
-                        }, 500); 
-                    });
+                    $('#result').hide().html(result).fadeIn(500); 
 
                     $('.progress-bar').each(function() {
                         let $this = $(this);
@@ -227,7 +251,7 @@
             const availableEmojis = emojis.filter(emoji => !usedEmojis.includes(emoji));
 
             if (availableEmojis.length === 0) return;
- 
+
             const emoji = availableEmojis[Math.floor(Math.random() * availableEmojis.length)];
 
             const xPos = Math.random() * (100 - emojiSize) + (emojiSize / 2); 
